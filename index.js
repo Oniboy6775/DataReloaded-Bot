@@ -39,4 +39,4 @@ bot.command("data", (ctx) => {
     });
 });
 bot.launch();
-expressApp.listen(port, () => console.log(`Listening on ${port}`));
+// expressApp.listen(port, () => console.log(`Listening on ${port}`));
