@@ -18,12 +18,12 @@ bot.command("start", (ctx) => {
   console.log(ctx.from);
   bot.telegram.sendMessage(
     ctx.chat.id,
-    `Hello ${ctx.from.first_name} ${ctx.from.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to /BuyData \n. Please try it`,
+    `Hello ${ctx.from.first_name} ${ctx.from.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to \n /start \n /data \n Please try it`,
     {}
   );
 });
 
-bot.command("buyData", (ctx) => {
+bot.command("data", (ctx) => {
   var rate;
   console.log(ctx.chat);
   console.log(ctx.from);
@@ -34,7 +34,7 @@ bot.command("buyData", (ctx) => {
     .then((response) => {
       console.log(response.data);
       rate = response.data.ethereum;
-      const message = `Hello, today the ethereum price is ${rate.usd}USD`;
+      const message = `Hello, today the ethereum price is \n ${rate.usd}USD`;
       bot.telegram.sendMessage(ctx.chat.id, message, {});
     });
 });
