@@ -10,22 +10,20 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-expressApp.use(bot.webhookCallback("/secret-path"));
-// bot.telegram.setWebhook("<YOUR_CAPSULE_URL>/secret-path");
+
 expressApp.get("/", (req, res) => {
   res.sendFile(path.join(__dirname + "/index.html"));
 });
 bot.command("start", (ctx) => {
-  console.log({ messageId: ctx.update.message.message_id });
-  console.log({ messageChat: ctx.update.message.chat });
+  console.log(ctx.from);
   bot.telegram.sendMessage(
     ctx.chat.id,
-    `Hello ${ctx.from.first_name} ${ctx.from.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to /ethereum \n /BuyData. Please try it`,
+    `Hello ${ctx.from.first_name} ${ctx.from.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to /BuyData \n. Please try it`,
     {}
   );
 });
 
-bot.command("username_password", (ctx) => {
+bot.command("buyData", (ctx) => {
   var rate;
   console.log(ctx.chat);
   console.log(ctx.from);
