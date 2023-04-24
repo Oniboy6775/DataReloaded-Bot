@@ -8,71 +8,91 @@ expressApp.use(express.json());
 require("dotenv").config();
 
 const { Telegraf } = require("telegraf");
+const BUYDATA = require("./buyData");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-bot.telegram.setWebhook("https://www.datareloaded.com/api/v1/bot", {
-  secret_token: "ABDULLAHI",
+bot.telegram.setWebhook(process.env.WEBHOOK_URL, {
+  secret_token: process.env.BOT_SECRET_TOKEN,
 });
 
-expressApp.use("/data", (req, res) => {
-  const body = {
-    update_id: 170323251,
-    message: {
-      message_id: 256,
-      from: {
-        id: 1696840985,
-        is_bot: false,
-        first_name: "Onisabi",
-        last_name: "Abdullahi",
-        username: "oniboyAirdrop",
-        language_code: "en",
-      },
-      chat: {
-        id: 1696840985,
-        first_name: "Onisabi",
-        last_name: "Abdullahi",
-        username: "oniboyAirdrop",
-        type: "private",
-      },
-      date: 1682314355,
-      text: "/start",
-      entities: [[Object]],
-    },
-  };
-
-  const { chatId, data } = req.body;
+expressApp.use("/purchase", async (req, res) => {
+  const { data } = req.body;
   console.log(data);
-  const { msg } = data;
-  bot.telegram.sendMessage(chatId, msg);
+  const { userText, msg } = data;
+  if (userText == "/start") {
+    bot.telegram.sendMessage(
+      data.id,
+      `Hello ${data.first_name} ${data.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to \n /start \n /data - To buy data \n /airtime - To buy airtime \n Please try it. If you are yet to register kindly register on www.dataReloaded.com/register`,
+      {}
+    );
+  }
+  if (userText == "/airtime") {
+    bot.telegram.sendMessage(
+      data.id,
+      `To buy airtime send me a message in this format\n \n \nAIRTIME NETWORK NUMBER AMOUNT EMAIL:PASSWORD \n 1 for 1GB, 2 for 2GB `,
+      {}
+    );
+  }
+
+  if (userText == "/data") {
+    bot.telegram.sendMessage(
+      data.id,
+      `To buy data send me a message in this format\n \n \nDATA NETWORK NUMBER DATA_VOLUME EMAIL:PASSWORD \n FOR EXAMPLE: \n \nDATA MTN 08108126121 1 EMAIL:PASSWORD \n \n make suer you have enough balance on your account \n\n `,
+      {}
+    );
+  }
+  if (userText == "/buy") {
+    const { first_name, last_name, token, type, network, phoneNumber, volume } =
+      data;
+    let NETWORK;
+    if (network == "MTN") NETWORK = "1";
+    if (network == "GLO") NETWORK = "2";
+    if (network == "AIRTEL") NETWORK = "3";
+    if (network == "9MOBILE") NETWORK = "4";
+    if (type != "data")
+      return bot.telegram.sendMessage(
+        data.id,
+        "Airtime support is unavailable"
+      );
+    bot.telegram.sendMessage(data.id, "Processing...");
+    try {
+      let {
+        status,
+        msg,
+        data: buyResponse,
+      } = await BUYDATA({
+        networkId: NETWORK,
+        network,
+        mobile_number: phoneNumber,
+        volume,
+        token,
+      });
+      console.log(buyResponse);
+      bot.telegram.sendMessage(data.id, msg);
+      if (status)
+        bot.telegram.sendMessage(
+          data.id,
+          `${buyResponse.trans_Type.toUpperCase()} purchase ${
+            buyResponse.trans_Status
+          } on ${buyResponse.phone_number}\n Username: ${
+            buyResponse.trans_UserName
+          }\n \n ${buyResponse.apiResponse || msg} \n Previous Balance:${
+            buyResponse.balance_Before
+          } \n Balance After: ${buyResponse.balance_After} \n Amount charged: ${
+            buyResponse.trans_amount
+          }`,
+          {}
+        );
+    } catch (error) {
+      bot.telegram.sendMessage(data.id, `Transaction failed`, {});
+    }
+  } else if (userText == "/error") {
+    bot.telegram.sendMessage(data.id, msg, {});
+  }
   res.sendStatus(200);
 });
 expressApp.get("/", (req, res) => {
   res.sendFile(path.join(__dirname + "/index.html"));
 });
 
-bot.command("start", (ctx) => {
-  console.log(ctx.from);
-  bot.telegram.sendMessage(
-    ctx.chat.id,
-    `Hello ${ctx.from.first_name} ${ctx.from.last_name}! Welcome to www.dataReloaded.com bot.\nI respond to \n /start \n /data \n Please try it`,
-    {}
-  );
-});
-
-bot.command("data", (ctx) => {
-  var rate;
-  console.log(ctx.chat);
-  console.log(ctx.from);
-  axios
-    .get(
-      `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`
-    )
-    .then((response) => {
-      console.log(response.data);
-      rate = response.data.ethereum;
-      const message = `Hello, today the ethereum price is \n ${rate.usd}USD`;
-      bot.telegram.sendMessage(ctx.chat.id, message, {});
-    });
-});
-// bot.launch();
 expressApp.listen(port, () => console.log(`Listening on ${port}`));
